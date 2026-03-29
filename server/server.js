@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectdb from "./configs/db.js";
 import "dotenv/config"
+import userRouter from "./routes/userRoute.js";
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use(cookieParser());
 app.get("/", (req, res) => {
   res.send("Server is running");
 });
+app.use('/api/user', userRouter)
 
 // DB connect
 // mongoose
