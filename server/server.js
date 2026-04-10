@@ -24,7 +24,7 @@ await connectCloudinay();
 //Allowing multiple origins
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://grocery-app-lyart-xi.vercel.app/',
+  'https://grocery-app-lyart-xi.vercel.app',
   process.env.FRONTEND_URL,
 ].filter(Boolean)
 
