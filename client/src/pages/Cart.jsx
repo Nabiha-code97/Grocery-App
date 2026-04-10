@@ -27,8 +27,8 @@ const Cart = () => {
         try {
             const { data } = await axios.get('/api/address/get')
             if (data.success) {
-                setAddresses(data.addresses)
-                if (data.addresses.length > 0) setSelectedAddress(data.addresses[0])
+                setAddresses(data.addresses || [])
+                if (data.addresses && data.addresses.length > 0) setSelectedAddress(data.addresses[0])
             } else {
                 toast.error(data.message)
             }

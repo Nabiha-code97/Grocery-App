@@ -1,6 +1,6 @@
 import React from 'react'
 import NavBar from './components/NavBar'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import {Toaster} from "react-hot-toast"
 import Footer from "./components/Footer"
@@ -20,6 +20,15 @@ import ProductList from './pages/seller/ProductList'
 import Orders from './pages/seller/Orders'
 
 
+const ProtectedRoute = ({ children }) => {
+  const { user, setShowUserLogin } = useAppContext();
+  if (!user) {
+    setShowUserLogin(true);
+    return <Navigate to="/" />;
+  }
+  return children;
+};
+
 function App() {
   const isSellerPath = useLocation().pathname.includes("seller");
   const {showUserLogin, isSeller} = useAppContext();
@@ -36,8 +45,8 @@ function App() {
           <Route path= "/products/:category" element={<ProductCategory/>}/>
           <Route path= "/products/:category/:id" element={<ProductDetails/>}/>
           <Route path= "/cart" element={<Cart/>}/>
-          <Route path= "/add-address" element={<AddAddress/>}/>
-          <Route path= "/my-orders" element={<MyOrders/>}/>
+          <Route path= "/add-address" element={<ProtectedRoute><AddAddress/></ProtectedRoute>}/>
+          <Route path= "/my-orders" element={<ProtectedRoute><MyOrders/></ProtectedRoute>}/>
           <Route path= "/loader" element={<Loader/>}/>
           <Route path= "/seller" element={isSeller ? <SellerLayout /> : <SellerLogin/>}>
           <Route index element={isSeller ? <AddProduct />:null}/>

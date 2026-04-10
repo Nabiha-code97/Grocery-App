@@ -13,6 +13,8 @@ const NavBar = () => {
     try {
       const { data } = await axios.get('/api/user/logout')
       if (data.success) {
+        localStorage.removeItem('userToken')
+        delete axios.defaults.headers.common['user-token']
         setUser(null)
         setCartItems({})
         navigate("/")

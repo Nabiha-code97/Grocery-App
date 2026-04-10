@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 
 const authUser = async(req, res, next)=>{
-    const {token} = req.cookies;
+    const token = req.cookies.token || req.headers['user-token'];
 
     if(!token){
         return res.json({success:'false', message:'Not authorized!'})

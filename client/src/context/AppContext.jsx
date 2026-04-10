@@ -11,6 +11,11 @@ const savedSellerToken = localStorage.getItem('sellerToken')
 if (savedSellerToken) {
   axios.defaults.headers.common['seller-token'] = savedSellerToken
 }
+
+const savedUserToken = localStorage.getItem('userToken')
+if (savedUserToken) {
+  axios.defaults.headers.common['user-token'] = savedUserToken
+}
 export const AppContext = createContext();
 
 export const AppContextProvider = ({ children }) => {

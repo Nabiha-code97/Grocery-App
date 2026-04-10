@@ -26,6 +26,8 @@ const Login = () => {
                     password: formData.password
                 })
                 if (data.success === 'true') {
+                    localStorage.setItem('userToken', data.token)
+                    axios.defaults.headers.common['user-token'] = data.token
                     setUser(data.user)
                     setShowUserLogin(false)
                     toast.success('Logged in successfully')
@@ -39,6 +41,8 @@ const Login = () => {
                     password: formData.password
                 })
                 if (data.success === 'true') {
+                    localStorage.setItem('userToken', data.token)
+                    axios.defaults.headers.common['user-token'] = data.token
                     setUser(data.user)
                     setShowUserLogin(false)
                     toast.success('Account created successfully')
