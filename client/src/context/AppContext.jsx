@@ -6,6 +6,11 @@ import { dummyProducts } from "../assets/assets"
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL
+
+const savedSellerToken = localStorage.getItem('sellerToken')
+if (savedSellerToken) {
+  axios.defaults.headers.common['seller-token'] = savedSellerToken
+}
 export const AppContext = createContext();
 
 export const AppContextProvider = ({ children }) => {

@@ -12,6 +12,8 @@ const SellerLogin = () => {
         try {
             const { data } = await axios.post('/api/seller/login', { email, password })
             if(data.success === 'true'){
+                localStorage.setItem('sellerToken', data.token)
+                axios.defaults.headers.common['seller-token'] = data.token
                 setIsSeller(true)
                 toast.success('Seller logged in')
             } else {

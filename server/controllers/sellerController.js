@@ -22,7 +22,7 @@ export const sellerLogin = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         })
 
-        return res.json({ success: 'true', message: 'Seller logged in successfully' })
+        return res.json({ success: 'true', message: 'Seller logged in successfully', token })
 
     } catch (error) {
         console.log(error.message);
