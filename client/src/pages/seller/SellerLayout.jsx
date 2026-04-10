@@ -2,17 +2,30 @@ import React from 'react'
 import { useAppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const SellerLayout = () => {
-    const {setIsSeller} = useAppContext();
+    const { setIsSeller, axios, navigate } = useAppContext();
 
     const sidebarLinks = [
         { name: "All products", path: "/seller", icon: assets.add_icon },
         { name: "Products list", path: "/seller/product-list", icon: assets.product_list_icon },
         { name: "Orders", path: "/seller/orders", icon: assets.order_icon },
     ];
-    const logout = async()=>{
-        setIsSeller(false)
+
+    const logout = async () => {
+        try {
+            const { data } = await axios.get('/api/seller/logout')
+            if (data.success) {
+                setIsSeller(false)
+                navigate('/')
+                toast.success('Logged out')
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
     }
 
     return (

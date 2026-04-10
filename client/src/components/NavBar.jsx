@@ -2,15 +2,27 @@ import React, { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { assets } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
+import toast from "react-hot-toast";
 
 const NavBar = () => {
   const [open, setOpen] = React.useState(false);
 
-  const { user, setUser, setShowUserLogin, navigate, searchQuery, setSearchQuery, getCartCount } = useAppContext();
+  const { user, setUser, setShowUserLogin, navigate, searchQuery, setSearchQuery, getCartCount, setCartItems, axios } = useAppContext();
 
-  const logout = () => {
-    setUser(null);
-    navigate("/");
+  const logout = async () => {
+    try {
+      const { data } = await axios.get('/api/user/logout')
+      if (data.success) {
+        setUser(null)
+        setCartItems({})
+        navigate("/")
+        toast.success('Logged out successfully')
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
   };
 
   useEffect(()=>{
@@ -27,9 +39,11 @@ const NavBar = () => {
 
       {/* Desktop Menu */}
       <div className="hidden sm:flex items-center gap-8">
+        <button onClick={() => navigate("/seller")} className="cursor-pointer px-5 py-2 border border-gray-300 rounded-full text-sm hover:bg-gray-50 transition">
+          Seller Dashboard
+        </button>
         <NavLink to={"/"}>Home</NavLink>
         <NavLink to={"/products"}>All Products</NavLink>
-        <NavLink to={"/"}>Contact</NavLink>
 
         <div className="hidden lg:flex items-center text-sm gap-2 border border-gray-300 px-3 rounded-full">
           <input
@@ -88,10 +102,10 @@ const NavBar = () => {
         <div className="absolute top-[60px] left-0 w-full bg-white shadow-md py-4 flex flex-col items-start gap-2 px-5 text-sm md:hidden">
           <NavLink to={"/"} onClick={() => setOpen(false)}>Home</NavLink>
           <NavLink to={"/products"} onClick={() => setOpen(false)}>All Products</NavLink>
-
-          {user && <NavLink to={"/"} onClick={() => setOpen(false)}>My Orders</NavLink>}
-
-          <NavLink to={"/"} onClick={() => setOpen(false)}>Contact</NavLink>
+          {user && <NavLink to={"/my-orders"} onClick={() => setOpen(false)}>My Orders</NavLink>}
+          <button onClick={() => { setOpen(false); navigate("/seller"); }} className="cursor-pointer text-left">
+            Seller Dashboard
+          </button>
 
           {!user ? (
             <button
