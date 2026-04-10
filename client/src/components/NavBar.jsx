@@ -54,7 +54,7 @@ const NavBar = () => {
             type="text"
             placeholder="Search products"
           />
-          <img src={assets.search_icon} alt="search_icon" className="w-4 h-4" />
+          <img src={assets.search_icon} alt="search_icon" className="w-4 h-4 cursor-pointer" onClick={() => searchQuery && navigate("/products")} />
         </div>
 
         <div onClick={()=> navigate("/cart")} className="relative cursor-pointer">
