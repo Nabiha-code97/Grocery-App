@@ -24,6 +24,7 @@ await connectCloudinay();
 //Allowing multiple origins
 const allowedOrigins = [
   'http://localhost:5173',
+  'https://5c51-182-181-180-218.ngrok-free.app',
   process.env.FRONTEND_URL,
 ].filter(Boolean)
 
