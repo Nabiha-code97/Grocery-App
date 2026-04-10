@@ -35,7 +35,7 @@ const NavBar = () => {
 
   return (
     <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white relative transition-all">
-      <NavLink to={"/"} onClick={()=>setOpen(false)} >
+      <NavLink to={"/"} onClick={()=>{ setOpen(false); setSearchQuery(""); }} >
         <img className="h-9" src={assets.logo} alt="Greencart_Logo" />
       </NavLink>
 
@@ -44,7 +44,7 @@ const NavBar = () => {
         <button onClick={() => navigate("/seller")} className="cursor-pointer px-5 py-2 border border-gray-300 rounded-full text-sm hover:bg-gray-50 transition">
           Seller Dashboard
         </button>
-        <NavLink to={"/"}>Home</NavLink>
+        <NavLink to={"/"} onClick={() => setSearchQuery("")}>Home</NavLink>
         <NavLink to={"/products"}>All Products</NavLink>
 
         <div className="hidden lg:flex items-center text-sm gap-2 border border-gray-300 px-3 rounded-full">
@@ -102,7 +102,7 @@ const NavBar = () => {
       {/* Mobile Menu */}
       {open && (
         <div className="absolute top-[60px] left-0 w-full bg-white shadow-md py-4 flex flex-col items-start gap-2 px-5 text-sm md:hidden z-50">
-          <NavLink to={"/"} onClick={() => setOpen(false)}>Home</NavLink>
+          <NavLink to={"/"} onClick={() => { setOpen(false); setSearchQuery(""); }}>Home</NavLink>
           <NavLink to={"/products"} onClick={() => setOpen(false)}>All Products</NavLink>
           {user && <NavLink to={"/my-orders"} onClick={() => setOpen(false)}>My Orders</NavLink>}
           <button onClick={() => { setOpen(false); navigate("/seller"); }} className="cursor-pointer text-left">
