@@ -80,7 +80,10 @@ const ProductDetails = () => {
 
                     <p className="text-base font-medium mt-6">About Product</p>
                     <ul className="list-disc ml-4 text-gray-500/70">
-                        {product.description.map((desc, index) => (
+                        {(Array.isArray(product.description)
+                            ? product.description
+                            : [product.description]
+                        ).map((desc, index) => (
                             <li key={index}>{desc}</li>
                         ))}
                     </ul>

@@ -8,7 +8,7 @@ const SellerLayout = () => {
     const { setIsSeller, axios, navigate } = useAppContext();
 
     const sidebarLinks = [
-        { name: "All products", path: "/seller", icon: assets.add_icon },
+        { name: "Add products", path: "/seller", icon: assets.add_icon },
         { name: "Products list", path: "/seller/product-list", icon: assets.product_list_icon },
         { name: "Orders", path: "/seller/orders", icon: assets.order_icon },
     ];
