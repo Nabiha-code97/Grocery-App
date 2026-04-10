@@ -22,7 +22,10 @@ await connectdb();
 await connectCloudinay();
 
 //Allowing multiple origins
-const allowedOrigins = ['http://localhost:5173']
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.FRONTEND_URL,
+].filter(Boolean)
 
 // middlewares
 app.use(cors({origin: allowedOrigins, credentials: true}));
