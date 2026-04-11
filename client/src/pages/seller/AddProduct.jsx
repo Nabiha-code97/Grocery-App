@@ -12,9 +12,11 @@ const AddProduct = () => {
     const [category, setCategory] = useState('');
     const [price, setPrice] = useState('');
     const [offerPrice, setOfferPrice] = useState('');
+    const [isAdding, setIsAdding] = useState(false);
 
     const onSubmitHandler = async (event) => {
         event.preventDefault()
+        setIsAdding(true)
         try {
             const formData = new FormData()
             formData.append('name', name)
@@ -41,6 +43,8 @@ const AddProduct = () => {
             }
         } catch (error) {
             toast.error(error.message)
+        } finally {
+            setIsAdding(false)
         }
     }
 
@@ -91,7 +95,9 @@ const AddProduct = () => {
                             id="offer-price" type="number" placeholder="0" className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40" required />
                     </div>
                 </div>
-                <button className="px-8 py-2.5 bg-primary cursor-pointer text-white font-medium rounded">ADD</button>
+                <button disabled={isAdding} className={`px-8 py-2.5 bg-primary text-white font-medium rounded transition ${isAdding ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
+                    {isAdding ? 'Adding...' : 'ADD'}
+                </button>
             </form>
         </div>
     );

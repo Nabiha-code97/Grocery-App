@@ -45,14 +45,14 @@ const ProductDetails = () => {
                             <div
                                 key={index}
                                 onClick={() => setThumbnail(image)}
-                                className="border max-w-24 border-gray-500/30 rounded overflow-hidden cursor-pointer"
+                                className="border w-20 h-20 border-gray-500/30 rounded overflow-hidden cursor-pointer flex-shrink-0"
                             >
-                                <img src={image} alt={`Thumbnail ${index + 1}`} />
+                                <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
                             </div>
                         ))}
                     </div>
 
-                    <div className="border border-gray-500/30 max-w-100 rounded overflow-hidden">
+                    <div className="border border-gray-500/30 w-72 md:w-96 h-80 md:h-96 rounded overflow-hidden flex-shrink-0">
                         <img src={thumbnail} alt="Selected product" className="w-full h-full object-cover" />
                     </div>
                 </div>

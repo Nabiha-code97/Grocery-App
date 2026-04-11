@@ -11,8 +11,8 @@ const ProductCard = ({product}) => {
                 navigate(`/products/${product.category.toLowerCase()}/${product._id}`); 
                 scrollTo(0, 0); 
             }} className="border border-gray-500/20 rounded-md md:px-4 px-3 py-2 bg-white w-full">
-            <div className="group cursor-pointer flex items-center justify-center px-2 h-36">
-                <img className="group-hover:scale-105 transition h-full w-full object-contain" src={product.image[0]} alt={product.name} />
+            <div className="group cursor-pointer overflow-hidden h-36">
+                <img className="group-hover:scale-105 transition h-full w-full object-cover" src={product.image[0]} alt={product.name} />
             </div>
             <div className="text-gray-500/60 text-sm">
                 <p>{product.category}</p>
