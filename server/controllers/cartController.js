@@ -6,10 +6,12 @@ export const updateCart = async (req, res) => {
         const userId = req.user.userId;
         const { cartItems } = req.body;
 
+        // cartItems must be present; reject early to avoid writing undefined to DB
         if (!cartItems) {
             return res.json({ success: false, message: 'cartItems required' })
         }
 
+        // Replaces the entire cart in one atomic write instead of merging item-by-item
         await User.findByIdAndUpdate(userId, { cartItem: cartItems })
 
         return res.json({ success: true, message: 'Cart updated' })

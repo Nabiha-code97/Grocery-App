@@ -10,7 +10,8 @@ const productSchema = mongoose.Schema({
     category: { type: String, required: true },
     subCategory: { type: String },
     inStock: { type: Boolean, default: true },
+    sellerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true })
 
-const Product = mongoose.models.product || mongoose.model('product', productSchema);
+const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
 export default Product

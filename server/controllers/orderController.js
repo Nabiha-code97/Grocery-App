@@ -47,13 +47,31 @@ export const getUserOrders = async (req, res)=>{
         res.json({ success: false, message: error.message });
     }
 }
-// Get All Orders ( for seller / admin) : /api/order/seller
-export const getAllOrders = async (req, res)=>{
+// Get Orders scoped to the logged-in seller's own products : /api/order/seller
+export const getSellerOrders = async (req, res)=>{
     try {
+        const products = await Product.find({ sellerId: req.user.userId }).select('_id');
+        const productIds = products.map(p => p._id.toString());
+
         const orders = await Order.find({
-            $or: [{paymentType: "COD"}, {isPaid: true}]
+            $or: [{paymentType: "COD"}, {isPaid: true}],
+            'items.product': { $in: productIds }
         }).populate("items.product address").sort({createdAt: -1});
-        res.json({ success: true, orders });
+
+        const scoped = orders.map(order => {
+            const items = order.items.filter(item => productIds.includes(item.product?._id?.toString() ?? item.product?.toString()));
+
+            const sellerAmount = items.reduce(
+                (sum, item) => sum + (item.product?.offerPrice ?? 0) * item.quantity,
+                0
+            );
+
+            const { amount, ...rest } = order.toObject();
+
+            return { ...rest, items, sellerAmount };
+        });
+
+        res.json({ success: true, orders: scoped });
     } catch (error) {
         res.json({ success: false, message: error.message });
     }
@@ -144,19 +162,39 @@ export const verifyStripe = async (req, res) => {
     }
 };
 
-// Update Order Status (for seller) : /api/order/status
+export const ORDER_STATUSES = ['Order Placed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+
+// Update Order Status : /api/order/status
 export const updateOrderStatus = async (req, res) => {
     try {
         const { orderId, status } = req.body;
+
         if (!orderId || !status) {
-            return res.json({ success: false, message: "orderId and status required" });
+            return res.status(400).json({ success: false, message: "orderId and status required" });
         }
-        const order = await Order.findByIdAndUpdate(orderId, { status }, { new: true });
+
+        if (!ORDER_STATUSES.includes(status)) {
+            return res.status(400).json({ success: false, message: "Invalid status" });
+        }
+
+        const order = await Order.findById(orderId);
+
         if (!order) {
-            return res.json({ success: false, message: "Order not found" });
+            return res.status(404).json({ success: false, message: "Order not found" });
         }
+
+        const productIds = order.items.map(item => String(item.product));
+        const owned = await Product.countDocuments({ _id: { $in: productIds }, sellerId: req.user.userId });
+
+        if (owned === 0) {
+            return res.status(403).json({ success: false, message: "Not authorized for this order" });
+        }
+
+        order.status = status;
+        await order.save();
+
         res.json({ success: true, message: "Order status updated", order });
     } catch (error) {
-        res.json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 }

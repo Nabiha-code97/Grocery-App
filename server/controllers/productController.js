@@ -22,7 +22,8 @@ export const addProduct = async (req, res) => {
 
         const product = await Product.create({
             name, description, price, offerPrice, category, subCategory,
-            image: imagesURL
+            image: imagesURL,
+            sellerId: req.user.userId
         })
 
         return res.json({ success: true, message: 'Product added', product })
@@ -41,6 +42,17 @@ export const productList = async (_req, res) => {
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message })
+    }
+}
+
+// Get the logged-in seller's own products --- /api/product/seller  (Seller)
+export const sellerProducts = async (req, res) => {
+    try {
+        const products = await Product.find({ sellerId: req.user.userId }).sort({ createdAt: -1 })
+        return res.json({ success: true, products })
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ success: false, message: error.message })
     }
 }
 
@@ -67,11 +79,17 @@ export const deleteProduct = async (req, res) => {
     try {
         const { id } = req.body;
 
-        const product = await Product.findByIdAndDelete(id)
+        const product = await Product.findById(id)
 
         if (!product) {
             return res.json({ success: false, message: 'Product not found' })
         }
+
+        if (product.sellerId.toString() !== req.user.userId) {
+            return res.json({ success: false, message: 'Not authorized for this product' })
+        }
+
+        await product.deleteOne()
 
         return res.json({ success: true, message: 'Product deleted' })
 
@@ -90,11 +108,17 @@ export const changeStock = async (req, res) => {
             return res.json({ success: false, message: 'id and inStock required' })
         }
 
-        const product = await Product.findByIdAndUpdate(id, { inStock }, { new: true })
+        const existing = await Product.findById(id)
 
-        if (!product) {
+        if (!existing) {
             return res.json({ success: false, message: 'Product not found' })
         }
+
+        if (existing.sellerId.toString() !== req.user.userId) {
+            return res.json({ success: false, message: 'Not authorized for this product' })
+        }
+
+        const product = await Product.findByIdAndUpdate(id, { inStock }, { new: true })
 
         return res.json({ success: true, message: 'Stock updated', product })
 

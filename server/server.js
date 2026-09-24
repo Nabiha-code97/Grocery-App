@@ -6,12 +6,13 @@ import cookieParser from "cookie-parser";
 import connectdb from "./configs/db.js";
 import "dotenv/config"
 import userRouter from "./routes/userRoute.js";
-import sellerRouter from "./routes/sellerRoute.js";
+import adminRouter from "./routes/adminRoute.js";
 import productRouter from "./routes/productRoute.js";
 import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 import addressRouter from "./routes/addressRoute.js";
 import connectCloudinay from "./configs/cloudinary.js";
+import authRouter from "./routes/authRoutes.js";
 
 dotenv.config();
 
@@ -38,11 +39,12 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 app.use('/api/user', userRouter)
-app.use('/api/seller', sellerRouter)
+app.use('/api/admin', adminRouter)
 app.use('/api/product', productRouter)
 app.use('/api/cart', cartRouter)
 app.use('/api/order', orderRouter)
 app.use('/api/address', addressRouter)
+app.use('/api/auth', authRouter)
 
 // DB connect
 // mongoose
