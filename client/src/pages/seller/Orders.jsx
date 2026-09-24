@@ -7,6 +7,10 @@ const Orders = () => {
     const { currency, axios } = useAppContext()
     const [orders, setOrders] = useState([])
 
+    const errorMessage = (error) => error.response?.data?.message || error.message
+
+    const ORDER_STATUSES = ['Order Placed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled']
+
     const fetchOrders = async () => {
         try {
             const { data } = await axios.get('/api/order/seller')
@@ -16,7 +20,7 @@ const Orders = () => {
                 toast.error(data.message)
             }
         } catch (error) {
-            toast.error(error.message)
+            toast.error(errorMessage(error))
         }
     };
 
@@ -30,7 +34,7 @@ const Orders = () => {
                 toast.error(data.message)
             }
         } catch (error) {
-            toast.error(error.message)
+            toast.error(errorMessage(error))
         }
     }
 
@@ -64,7 +68,7 @@ const Orders = () => {
                             <p>{order.address.phone}</p>
                         </div>
 
-                        <p className="font-medium text-lg my-auto">{currency}{order.amount}</p>
+                        <p className="font-medium text-lg my-auto">{currency}{order.sellerAmount}</p>
 
                         <div className="flex flex-col text-sm gap-1">
                             <p>Method: {order.paymentType}</p>
@@ -75,11 +79,9 @@ const Orders = () => {
                                 onChange={(e) => updateStatus(order._id, e.target.value)}
                                 className="mt-1 border border-gray-300 rounded px-2 py-1 outline-none text-gray-700"
                             >
-                                <option value="Order Placed">Order Placed</option>
-                                <option value="Packing">Packing</option>
-                                <option value="Shipped">Shipped</option>
-                                <option value="Out for delivery">Out for delivery</option>
-                                <option value="Delivered">Delivered</option>
+                                {ORDER_STATUSES.map(status => (
+                                    <option key={status} value={status}>{status}</option>
+                                ))}
                             </select>
                         </div>
                     </div>

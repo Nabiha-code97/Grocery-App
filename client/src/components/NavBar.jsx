@@ -2,30 +2,11 @@ import React, { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { assets } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
-import toast from "react-hot-toast";
 
 const NavBar = () => {
   const [open, setOpen] = React.useState(false);
 
-  const { user, setUser, setShowUserLogin, navigate, searchQuery, setSearchQuery, getCartCount, setCartItems, axios } = useAppContext();
-
-  const logout = async () => {
-    try {
-      const { data } = await axios.get('/api/user/logout')
-      if (data.success) {
-        localStorage.removeItem('userToken')
-        delete axios.defaults.headers.common['user-token']
-        setUser(null)
-        setCartItems({})
-        navigate("/")
-        toast.success('Logged out successfully')
-      } else {
-        toast.error(data.message)
-      }
-    } catch (error) {
-      toast.error(error.message)
-    }
-  };
+  const { user, isSeller, isCustomer, setShowUserLogin, navigate, searchQuery, setSearchQuery, getCartCount, logout } = useAppContext();
 
   useEffect(()=>{
     if(searchQuery.length > 0){
@@ -41,9 +22,11 @@ const NavBar = () => {
 
       {/* Desktop Menu */}
       <div className="hidden sm:flex items-center gap-8">
-        <button onClick={() => navigate("/seller")} className="cursor-pointer px-5 py-2 border border-gray-300 rounded-full text-sm hover:bg-gray-50 transition">
-          Seller Dashboard
-        </button>
+        {isSeller && (
+          <button onClick={() => navigate("/seller")} className="cursor-pointer px-5 py-2 border border-gray-300 rounded-full text-sm hover:bg-gray-50 transition">
+            Seller Dashboard
+          </button>
+        )}
         <NavLink to={"/"} onClick={() => setSearchQuery("")}>Home</NavLink>
         <NavLink to={"/products"}>All Products</NavLink>
 
@@ -58,12 +41,14 @@ const NavBar = () => {
           <img src={assets.search_icon} alt="search_icon" className="w-4 h-4 cursor-pointer" onClick={() => navigate("/products")} />
         </div>
 
-        <div onClick={()=> navigate("/cart")} className="relative cursor-pointer">
-          <img src={assets.nav_cart_icon} alt="nav_cart_icon" className="w-6 opacity-80" />
-          <button className="absolute -top-2 -right-3 text-xs text-white bg-primary w-[18px] h-[18px] rounded-full">
-            {getCartCount()}
-          </button>
-        </div>
+        {!isSeller && (
+          <div onClick={()=> navigate("/cart")} className="relative cursor-pointer">
+            <img src={assets.nav_cart_icon} alt="nav_cart_icon" className="w-6 opacity-80" />
+            <button className="absolute -top-2 -right-3 text-xs text-white bg-primary w-[18px] h-[18px] rounded-full">
+              {getCartCount()}
+            </button>
+          </div>
+        )}
 
         {!user ? (
           <button
@@ -76,9 +61,16 @@ const NavBar = () => {
           <div className="relative group">
             <img src={assets.profile_icon} className="w-10" alt="Profile icon" />
             <ul className='hidden group-hover:block absolute top-10 right-0 bg-white shadow border border-gray-200 py-2.5 w-30 rounded-md text-sm z-40'>
-                <li onClick={() => navigate("my-orders")} className='p-1.5 pl-3 hover:bg-primary/10 cursor-pointer'>
+                {isCustomer && (
+                <li onClick={() => navigate("/my-orders")} className='p-1.5 pl-3 hover:bg-primary/10 cursor-pointer'>
                      My Orders
                 </li>
+                )}
+                {isSeller && (
+                <li onClick={() => navigate("/seller")} className='p-1.5 pl-3 hover:bg-primary/10 cursor-pointer'>
+                     Dashboard
+                </li>
+                )}
                 <li onClick={logout} className='p-1.5 pl-3 hover:bg-primary/10 cursor-pointer'>
                      Logout
                 </li>
@@ -88,12 +80,14 @@ const NavBar = () => {
       </div>
 
 <div className="flex items-center gap-6 sm:hidden">
+  {!isSeller && (
   <div onClick={()=> navigate("/cart")} className="relative cursor-pointer">
           <img src={assets.nav_cart_icon} alt="nav_cart_icon" className="w-6 opacity-80" />
           <button className="absolute -top-2 -right-3 text-xs text-white bg-primary w-[18px] h-[18px] rounded-full">
             {getCartCount()}
           </button>
         </div>
+  )}
 <button onClick={() => setOpen(!open)} aria-label="Menu" className="">
         <img src={assets.menu_icon} alt="menu_icon" />
       </button>
@@ -105,10 +99,12 @@ const NavBar = () => {
         <div className="absolute top-[60px] left-0 w-full bg-white shadow-md py-4 flex flex-col items-start gap-2 px-5 text-sm md:hidden z-50">
           <NavLink to={"/"} onClick={() => { setOpen(false); setSearchQuery(""); }}>Home</NavLink>
           <NavLink to={"/products"} onClick={() => setOpen(false)}>All Products</NavLink>
-          {user && <NavLink to={"/my-orders"} onClick={() => setOpen(false)}>My Orders</NavLink>}
-          <button onClick={() => { setOpen(false); navigate("/seller"); }} className="cursor-pointer text-left">
-            Seller Dashboard
-          </button>
+          {isCustomer && <NavLink to={"/my-orders"} onClick={() => setOpen(false)}>My Orders</NavLink>}
+          {isSeller && (
+            <button onClick={() => { setOpen(false); navigate("/seller"); }} className="cursor-pointer text-left">
+              Seller Dashboard
+            </button>
+          )}
 
           {!user ? (
             <button

@@ -1,20 +1,41 @@
+import { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 
 const ProductList = () => {
-    const { products, currency, axios, fetchProducts } = useAppContext();
+    const { currency, axios } = useAppContext();
+    const [products, setProducts] = useState([]);
+
+    const errorMessage = (error) => error.response?.data?.message || error.message
+
+    const fetchSellerProducts = async () => {
+        try {
+            const { data } = await axios.get('/api/product/seller')
+            if (data.success) {
+                setProducts(data.products)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(errorMessage(error))
+        }
+    }
+
+    useEffect(() => {
+        fetchSellerProducts()
+    }, [])
 
     const deleteProduct = async (id) => {
         try {
             const { data } = await axios.post('/api/product/delete', { id })
             if (data.success) {
                 toast.success(data.message)
-                fetchProducts()
+                fetchSellerProducts()
             } else {
                 toast.error(data.message)
             }
         } catch (error) {
-            toast.error(error.message)
+            toast.error(errorMessage(error))
         }
     }
 
@@ -23,19 +44,19 @@ const ProductList = () => {
             const { data } = await axios.post('/api/product/stock', { id, inStock })
             if (data.success) {
                 toast.success(data.message)
-                fetchProducts()
+                fetchSellerProducts()
             } else {
                 toast.error(data.message)
             }
         } catch (error) {
-            toast.error(error.message)
+            toast.error(errorMessage(error))
         }
     }
 
     return (
         <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll flex flex-col justify-between">
             <div className="w-full md:p-10 p-4">
-                <h2 className="pb-4 text-lg font-medium">All Products</h2>
+                <h2 className="pb-4 text-lg font-medium">Your Products</h2>
                 <div className="flex flex-col items-center max-w-4xl w-full overflow-hidden rounded-md bg-white border border-gray-500/20">
                     <table className="md:table-auto table-fixed w-full overflow-hidden">
                         <thead className="text-gray-900 text-sm text-left">

@@ -1,15 +1,26 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
+import PasswordInput from './PasswordInput'
 import toast from 'react-hot-toast'
 
-const Login = () => {
-    const { setShowUserLogin, setUser, axios } = useAppContext()
-    const [state, setState] = React.useState("login")
+const RESEND_COOLDOWN_MS = 30 * 1000
 
-    const [formData, setFormData] = React.useState({
+const Login = () => {
+    const { setShowUserLogin, setUser, setCartItems, navigate, axios } = useAppContext()
+
+    const [step, setStep] = useState("login")
+    const [role, setRole] = useState("user")
+    const [loading, setLoading] = useState(false)
+    const [pendingRoles, setPendingRoles] = useState([])
+    const [resendAt, setResendAt] = useState(0)
+
+    const [formData, setFormData] = useState({
         name: '',
         email: '',
-        password: ''
+        password: '',
+        shopName: '',
+        phone: '',
+        otp: ''
     })
 
     const handleChange = (e) => {
@@ -17,67 +28,268 @@ const Login = () => {
         setFormData(prev => ({ ...prev, [name]: value }))
     }
 
+    const errorMessage = (error) => error.response?.data?.message || error.message
+
+    const selectRole = (nextRole) => {
+        setRole(nextRole)
+        if (nextRole === 'user') {
+            setFormData(prev => ({ ...prev, shopName: '', phone: '' }))
+        }
+    }
+
+    const finishAuth = (data) => {
+        localStorage.setItem('userToken', data.token)
+        axios.defaults.headers.common['user-token'] = data.token
+        setUser(data.user)
+        if (data.user.role === 'seller') setCartItems({})
+        setShowUserLogin(false)
+        navigate(data.user.role === 'seller' ? '/seller' : '/')
+    }
+
+    const doLogin = async (chosenRole) => {
+        const { data } = await axios.post('/api/user/login', {
+            email: formData.email,
+            password: formData.password,
+            ...(chosenRole && { role: chosenRole })
+        })
+
+        if (data.needsRole) {
+            setPendingRoles(data.roles)
+            setStep("pickRole")
+            return
+        }
+
+        if (data.success) {
+            finishAuth(data)
+            toast.success('Logged in successfully')
+        } else {
+            toast.error(data.message)
+        }
+    }
+
+    const sendOTP = async () => {
+        const { data } = await axios.post('/api/auth/signup', {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            role,
+            ...(role === 'seller' && { shopName: formData.shopName, phone: formData.phone })
+        })
+
+        if (data.success) {
+            setResendAt(Date.now() + RESEND_COOLDOWN_MS)
+            setStep("otp")
+            toast.success(`OTP sent to ${formData.email}`)
+        } else {
+            toast.error(data.message)
+        }
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
+        if (loading) return
+        setLoading(true)
+
         try {
-            if (state === "login") {
-                const { data } = await axios.post('/api/user/login', {
+            if (step === "login") {
+                await doLogin(null)
+            } else if (step === "signup") {
+                await sendOTP()
+            } else if (step === "otp") {
+                const { data } = await axios.post('/api/auth/verify-otp', {
                     email: formData.email,
-                    password: formData.password
+                    role,
+                    otp: formData.otp
                 })
-                if (data.success === 'true') {
-                    localStorage.setItem('userToken', data.token)
-                    axios.defaults.headers.common['user-token'] = data.token
-                    setUser(data.user)
-                    setShowUserLogin(false)
-                    toast.success('Logged in successfully')
-                } else {
-                    toast.error(data.message)
-                }
-            } else {
-                const { data } = await axios.post('/api/user/register', {
-                    name: formData.name,
-                    email: formData.email,
-                    password: formData.password
-                })
-                if (data.success === 'true') {
-                    localStorage.setItem('userToken', data.token)
-                    axios.defaults.headers.common['user-token'] = data.token
-                    setUser(data.user)
-                    setShowUserLogin(false)
+                if (data.success) {
+                    finishAuth(data)
                     toast.success('Account created successfully')
                 } else {
                     toast.error(data.message)
                 }
             }
         } catch (error) {
-            toast.error(error.message)
+            toast.error(errorMessage(error))
+        } finally {
+            setLoading(false)
         }
     }
+
+    const handlePickRole = async (chosenRole) => {
+        if (loading) return
+        setLoading(true)
+        try {
+            await doLogin(chosenRole)
+        } catch (error) {
+            toast.error(errorMessage(error))
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleResend = async () => {
+        if (loading || Date.now() < resendAt) return
+        setLoading(true)
+        try {
+            await sendOTP()
+        } catch (error) {
+            toast.error(errorMessage(error))
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const heading = {
+        login: "Login",
+        signup: "Sign up",
+        otp: "Verify Email",
+        pickRole: "Choose Account"
+    }[step]
 
     return (
         <div onClick={() => { setShowUserLogin(false) }} className='fixed top-0 bottom-0 left-0 right-0 z-30 flex items-center justify-center text-sm text-gray-600 bg-black/50 '>
             <form onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit} className="sm:w-[350px] w-full text-center border border-gray-300/60 rounded-2xl px-8 bg-white">
-                <h1 className="text-gray-900 text-3xl mt-10 font-medium">{state === "login" ? "Login" : "Sign up"}</h1>
-                <p className="text-gray-500 text-sm mt-2">Please sign in to continue</p>
-                {state !== "login" && (
-                    <div className="flex items-center mt-6 w-full bg-white border border-gray-300/80 h-12 rounded-full overflow-hidden pl-6 gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4fbf8b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-round-icon lucide-user-round"><circle cx="12" cy="8" r="5" /><path d="M20 21a8 8 0 0 0-16 0" /></svg>
-                        <input type="text" name="name" placeholder="Name" className="border-none autofill:bg-transparent outline-none ring-0" value={formData.name} onChange={handleChange} required />
-                    </div>
+                <h1 className="text-gray-900 text-3xl mt-10 font-medium">{heading}</h1>
+
+                {step === "pickRole" && (
+                    <>
+                        <p className="text-gray-500 text-sm mt-2">This email has more than one account.</p>
+                        <div className="flex flex-col gap-3 mt-6">
+                            {pendingRoles.map(r => (
+                                <button
+                                    key={r}
+                                    type="button"
+                                    disabled={loading}
+                                    onClick={() => handlePickRole(r)}
+                                    className="w-full py-2.5 rounded-full border border-gray-300 hover:bg-primary/10 hover:border-primary transition disabled:opacity-60"
+                                >
+                                    Continue as {r === 'seller' ? 'Seller' : 'Customer'}
+                                </button>
+                            ))}
+                        </div>
+                        <p onClick={() => setStep("login")} className="text-gray-500 text-sm mt-6 mb-11 cursor-pointer">
+                            Use a different account? <span className="text-primary hover:underline">click here</span>
+                        </p>
+                    </>
                 )}
-                <div className="flex items-center w-full mt-4 bg-white border border-gray-300/80 h-12 rounded-full overflow-hidden pl-6 gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4fbf8b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-mail-icon lucide-mail"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" /></svg>
-                    <input type="email" name="email" placeholder="Email id" className="border-none autofill:bg-transparent outline-none ring-0" value={formData.email} onChange={handleChange} required />
-                </div>
-                <div className="flex items-center mt-4 w-full bg-white border border-gray-300/80 h-12 rounded-full overflow-hidden pl-6 gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4fbf8b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-lock-icon lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                    <input type="password" name="password" placeholder="Password" className="border-none outline-none ring-0" value={formData.password} onChange={handleChange} required />
-                </div>
-                <button type="submit" className="mt-6 w-full h-11 rounded-full text-white bg-primary hover:bg-primary-dull transition-opacity">
-                    {state === "login" ? "Login" : "Sign up"}
-                </button>
-                <p onClick={() => setState(prev => prev === "login" ? "register" : "login")} className="text-gray-500 text-sm mt-3 mb-11 cursor-pointer">{state === "login" ? "Don't have an account?" : "Already have an account?"} <span className="text-primary hover:underline">click here</span></p>
+
+                {step === "otp" && (
+                    <>
+                        <p className="text-gray-500 text-sm mt-2">We sent a 6-digit code to {formData.email}</p>
+                        <input
+                            onChange={handleChange}
+                            value={formData.otp}
+                            name="otp"
+                            className="w-full border mt-6 border-gray-300 rounded-full py-2.5 text-center tracking-[0.5em] text-lg outline-none"
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={6}
+                            placeholder="000000"
+                            required
+                        />
+                        <button type="submit" disabled={loading} className="mt-6 w-full h-11 rounded-full text-white bg-primary hover:opacity-90 transition-opacity disabled:opacity-60">
+                            {loading ? "Verifying..." : "Verify & Create Account"}
+                        </button>
+                        <p className="text-gray-500 text-sm mt-4">
+                            Didn't get it?{" "}
+                            <span onClick={handleResend} className={Date.now() < resendAt ? "text-gray-400" : "text-primary hover:underline cursor-pointer"}>
+                                Resend code
+                            </span>
+                        </p>
+                        <p onClick={() => setStep("signup")} className="text-gray-500 text-sm mt-2 mb-11 cursor-pointer">
+                            Wrong email? <span className="text-primary hover:underline">go back</span>
+                        </p>
+                    </>
+                )}
+
+                {(step === "login" || step === "signup") && (
+                    <>
+                        {step === "signup" && (
+                            <div className="flex gap-2 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => selectRole("user")}
+                                    className={`flex-1 py-2 rounded-full border transition ${role === 'user' ? 'border-primary bg-primary/10 text-primary' : 'border-gray-300'}`}
+                                >
+                                    I'm a Customer
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => selectRole("seller")}
+                                    className={`flex-1 py-2 rounded-full border transition ${role === 'seller' ? 'border-primary bg-primary/10 text-primary' : 'border-gray-300'}`}
+                                >
+                                    I'm a Seller
+                                </button>
+                            </div>
+                        )}
+
+                        {step === "signup" && (
+                            <input
+                                onChange={handleChange}
+                                value={formData.name}
+                                name="name"
+                                className="w-full border mt-4 bg-transparent border-gray-300 outline-none rounded-full py-2.5 px-4"
+                                type="text"
+                                placeholder="Full Name"
+                                required
+                            />
+                        )}
+
+                        <input
+                            onChange={handleChange}
+                            value={formData.email}
+                            name="email"
+                            className="w-full border mt-4 bg-transparent border-gray-300 outline-none rounded-full py-2.5 px-4"
+                            type="email"
+                            placeholder="Email id"
+                            required
+                        />
+
+                        <div className="mt-4">
+                            <PasswordInput
+                                onChange={handleChange}
+                                value={formData.password}
+                                name="password"
+                                className="w-full border bg-transparent border-gray-300 outline-none rounded-full py-2.5 px-4"
+                                placeholder="Password"
+                                minLength={step === "signup" ? 8 : undefined}
+                                required
+                            />
+                        </div>
+
+                        {step === "signup" && role === "seller" && (
+                            <>
+                                <input
+                                    onChange={handleChange}
+                                    value={formData.shopName}
+                                    name="shopName"
+                                    className="w-full border mt-4 bg-transparent border-gray-300 outline-none rounded-full py-2.5 px-4"
+                                    type="text"
+                                    placeholder="Shop Name"
+                                    required
+                                />
+                                <input
+                                    onChange={handleChange}
+                                    value={formData.phone}
+                                    name="phone"
+                                    className="w-full border mt-4 bg-transparent border-gray-300 outline-none rounded-full py-2.5 px-4"
+                                    type="tel"
+                                    placeholder="Phone Number"
+                                    required
+                                />
+                            </>
+                        )}
+
+                        <button type="submit" disabled={loading} className="mt-6 w-full h-11 rounded-full text-white bg-primary hover:opacity-90 transition-opacity disabled:opacity-60">
+                            {loading ? "Please wait..." : step === "login" ? "Login" : "Send OTP"}
+                        </button>
+
+                        <p onClick={() => setStep(step === "login" ? "signup" : "login")} className="text-gray-500 text-sm mt-3 mb-11 cursor-pointer">
+                            {step === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+                            <span className="text-primary hover:underline">click here</span>
+                        </p>
+                    </>
+                )}
             </form>
         </div>
     )

@@ -2,14 +2,13 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios"
-import { dummyProducts } from "../assets/assets"
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL
 
-const savedSellerToken = localStorage.getItem('sellerToken')
-if (savedSellerToken) {
-  axios.defaults.headers.common['seller-token'] = savedSellerToken
+const savedAdminToken = localStorage.getItem('adminToken')
+if (savedAdminToken) {
+  axios.defaults.headers.common['admin-token'] = savedAdminToken
 }
 
 const savedUserToken = localStorage.getItem('userToken')
@@ -24,26 +23,29 @@ export const AppContextProvider = ({ children }) => {
 
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [isSeller, setIsSeller] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
+  const [adminResolved, setAdminResolved] = useState(false);
+  const role = user?.role ?? null;
+  const isSeller = role === 'seller';
+  const isCustomer = role === 'user';
   const [showUserLogin, setShowUserLogin] = useState(false);
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch All Products from backend and merge with dummyProducts
+  // Fetch All Products from backend
   const fetchProducts = async () => {
     try {
       const { data } = await axios.get('/api/product/list')
       if (data.success) {
-        // Merge: DB products first, then dummyProducts (skip any with duplicate _id)
-        const dbIds = new Set(data.products.map(p => p._id))
-        const filtered = dummyProducts.filter(p => !dbIds.has(p._id))
-        setProducts([...data.products, ...filtered])
+        setProducts(data.products)
       } else {
-        setProducts(dummyProducts)
+        setProducts([])
+        toast.error(data.message)
       }
     } catch (error) {
-      setProducts(dummyProducts)
+      setProducts([])
     }
   }
 
@@ -54,30 +56,47 @@ export const AppContextProvider = ({ children }) => {
       if (data.success) {
         setUser(data.user)
         setCartItems(data.user.cartItem || {})
+      } else {
+        setUser(null)
       }
     } catch (error) {
-      // not authenticated, ignore
+      setUser(null)
+    } finally {
+      setAuthResolved(true)
     }
   }
 
-  // Check seller auth on load
-  const fetchSeller = async () => {
+  // Check admin auth on load
+  const fetchAdmin = async () => {
     try {
-      const { data } = await axios.get('/api/seller/is-auth')
-      if (data.success) {
-        setIsSeller(true)
-      }
+      const { data } = await axios.get('/api/admin/is-auth')
+      setIsAdmin(!!data.success)
     } catch (error) {
-      // not seller, ignore
+      setIsAdmin(false)
+    } finally {
+      setAdminResolved(true)
     }
   }
 
-  // Sync cart to backend whenever cartItems changes (only if user is logged in)
-  useEffect(() => {
-    if (user) {
-      axios.post('/api/cart/update', { cartItems }).catch(() => {})
+  const logout = async () => {
+    try {
+      await axios.get('/api/user/logout')
+    } catch (error) {
+      // session is being discarded either way
     }
-  }, [cartItems])
+    localStorage.removeItem('userToken')
+    delete axios.defaults.headers.common['user-token']
+    setUser(null)
+    setCartItems({})
+    navigate('/')
+    toast.success('Logged out successfully')
+  }
+
+  // Sync cart to backend whenever cartItems changes (customers only)
+  useEffect(() => {
+    if (!authResolved || role !== 'user') return
+    axios.post('/api/cart/update', { cartItems }).catch(() => {})
+  }, [cartItems, role, authResolved])
 
   //Add to cart
   const addToCart = (itemId) => {
@@ -115,7 +134,7 @@ export const AppContextProvider = ({ children }) => {
   useEffect(() => {
     fetchProducts()
     fetchUser()
-    fetchSeller()
+    fetchAdmin()
   }, [])
 
   // Get Cart Item Count
@@ -142,8 +161,15 @@ export const AppContextProvider = ({ children }) => {
   const value = {
     user,
     setUser,
+    fetchUser,
+    role,
     isSeller,
-    setIsSeller,
+    isCustomer,
+    isAdmin,
+    setIsAdmin,
+    authResolved,
+    adminResolved,
+    logout,
     navigate,
     showUserLogin,
     setShowUserLogin,
