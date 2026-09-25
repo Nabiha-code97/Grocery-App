@@ -31,6 +31,7 @@ export const AppContextProvider = ({ children }) => {
   const isCustomer = role === 'user';
   const [showUserLogin, setShowUserLogin] = useState(false);
   const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [cartItems, setCartItems] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -46,6 +47,8 @@ export const AppContextProvider = ({ children }) => {
       }
     } catch (error) {
       setProducts([])
+    } finally {
+      setProductsLoading(false)
     }
   }
 
@@ -174,6 +177,7 @@ export const AppContextProvider = ({ children }) => {
     showUserLogin,
     setShowUserLogin,
     products,
+    productsLoading,
     fetchProducts,
     currency,
     addToCart,

@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useAppContext } from '../../context/AppContext';
+import Spinner from '../../components/Spinner';
 
 const RANGES = ['daily', 'weekly', 'monthly'];
 
 const SalesTrends = () => {
     const { axios, currency } = useAppContext();
+    const [trendLoading, setTrendLoading] = useState(true);
+    const [bestLoading, setBestLoading] = useState(true);
     const [range, setRange] = useState('daily');
     const [trend, setTrend] = useState([]);
     const [bestSellers, setBestSellers] = useState([]);
 
     const fetchTrend = async () => {
+        setTrendLoading(true)
         try {
             const { data } = await axios.get(`/api/admin/analytics/sales-trends?range=${range}`)
             if (data.success) {
@@ -18,6 +22,8 @@ const SalesTrends = () => {
             }
         } catch (error) {
             // ignore
+        } finally {
+            setTrendLoading(false)
         }
     }
 
@@ -29,6 +35,8 @@ const SalesTrends = () => {
             }
         } catch (error) {
             // ignore
+        } finally {
+            setBestLoading(false)
         }
     }
 
@@ -60,7 +68,9 @@ const SalesTrends = () => {
                         </div>
                     </div>
 
-                    {trend.length === 0 ? (
+                    {trendLoading ? (
+                        <Spinner className='h-[300px]' />
+                    ) : trend.length === 0 ? (
                         <p className="text-gray-500">No sales in this period.</p>
                     ) : (
                         <div className="bg-white border border-gray-500/20 rounded-md p-4" style={{ height: 320 }}>
@@ -80,7 +90,9 @@ const SalesTrends = () => {
                 <div>
                     <h2 className="pb-4 text-lg font-medium">Best-Selling Products</h2>
 
-                    {bestSellers.length === 0 ? (
+                    {bestLoading ? (
+                        <Spinner className='h-[300px]' />
+                    ) : bestSellers.length === 0 ? (
                         <p className="text-gray-500">No sales yet.</p>
                     ) : (
                         <>

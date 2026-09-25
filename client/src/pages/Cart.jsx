@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { assets } from '../assets/assets'
 import toast from 'react-hot-toast'
+import Spinner from '../components/Spinner'
 
 const Cart = () => {
-    const { products, currency, cartItems, removeFromCart, getCartCount, getCartAmount, navigate, updateCartItem, axios, setCartItems, user } = useAppContext()
+    const { products, productsLoading, currency, cartItems, removeFromCart, getCartCount, getCartAmount, navigate, updateCartItem, axios, setCartItems, user } = useAppContext()
     const [cartArray, setCartArray] = useState([])
     const [addresses, setAddresses] = useState([])
     const [selectedAddress, setSelectedAddress] = useState(null)
@@ -85,6 +86,8 @@ const Cart = () => {
             fetchAddresses()
         }
     }, [user])
+
+    if (productsLoading) return <Spinner className="h-[60vh]" />
 
     return products.length > 0 && cartItems ? (
         <div className="flex flex-col md:flex-row mt-16">

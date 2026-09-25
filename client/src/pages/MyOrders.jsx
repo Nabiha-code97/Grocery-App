@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import toast from 'react-hot-toast'
+import Spinner from '../components/Spinner'
 
 const MyOrders = () => {
     const [myOrders, setMyOrders] = useState([])
+    const [loading, setLoading] = useState(true)
     const { currency, axios } = useAppContext()
 
     const fetchMyOrders = async () => {
@@ -16,6 +18,8 @@ const MyOrders = () => {
             }
         } catch (error) {
             toast.error(error.response?.data?.message || error.message)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -29,7 +33,13 @@ const MyOrders = () => {
                 <p className='text-2xl font-medium uppercase'>My orders</p>
                 <div className='w-16 h-0.5 bg-primary rounded-full'></div>
             </div>
-            {myOrders.map((order, index) => (
+            {loading && <Spinner className='h-[50vh]' />}
+            {!loading && myOrders.length === 0 && (
+                <div className='flex items-center justify-center h-[50vh]'>
+                    <p className='text-2xl font-medium text-primary'>No orders yet.</p>
+                </div>
+            )}
+            {!loading && myOrders.map((order, index) => (
                 <div key={index} className='border border-gray-300 rounded-lg mb-10 p-4 py-5 max-w-4xl'>
                     <p className='flex justify-between md:items-center text-gray-400 md:font-medium max-md:flex-col'>
                         <span>OrderId : {order._id}</span>

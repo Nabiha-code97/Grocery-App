@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useAppContext } from '../../context/AppContext';
+import Spinner from '../../components/Spinner';
 
 const CustomersList = () => {
     const { axios } = useAppContext();
+    const [loading, setLoading] = useState(true);
     const [customers, setCustomers] = useState([]);
 
     const fetchCustomers = async () => {
@@ -13,6 +15,8 @@ const CustomersList = () => {
             }
         } catch (error) {
             // ignore
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -24,7 +28,9 @@ const CustomersList = () => {
         <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll flex flex-col justify-between">
             <div className="w-full md:p-10 p-4">
                 <h2 className="pb-4 text-lg font-medium">Registered Customers</h2>
-                {customers.length === 0 ? (
+                {loading ? (
+                    <Spinner className='h-[60vh]' />
+                ) : customers.length === 0 ? (
                     <p className="text-gray-500">No customers registered yet.</p>
                 ) : (
                     <div className="flex flex-col items-center max-w-4xl w-full overflow-hidden rounded-md bg-white border border-gray-500/20">

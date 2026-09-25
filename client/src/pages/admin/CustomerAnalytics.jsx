@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useAppContext } from '../../context/AppContext';
+import Spinner from '../../components/Spinner';
 
 const RANGES = ['daily', 'weekly', 'monthly'];
 
 const CustomerAnalytics = () => {
     const { axios } = useAppContext();
+    const [loading, setLoading] = useState(true);
     const [range, setRange] = useState('daily');
     const [data, setData] = useState([]);
 
     const fetchAnalytics = async () => {
+        setLoading(true)
         try {
             const { data: res } = await axios.get(`/api/admin/analytics/customers?range=${range}`)
             if (res.success) {
@@ -17,6 +20,8 @@ const CustomerAnalytics = () => {
             }
         } catch (error) {
             // ignore
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -42,7 +47,9 @@ const CustomerAnalytics = () => {
                     </div>
                 </div>
 
-                {data.length === 0 ? (
+                {loading ? (
+                    <Spinner className='h-[300px]' />
+                ) : data.length === 0 ? (
                     <p className="text-gray-500">No signups in this period.</p>
                 ) : (
                     <div className="bg-white border border-gray-500/20 rounded-md p-4" style={{ height: 360 }}>

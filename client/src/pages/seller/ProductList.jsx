@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import toast from 'react-hot-toast';
+import Spinner from '../../components/Spinner';
 
 const ProductList = () => {
     const { currency, axios } = useAppContext();
     const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const errorMessage = (error) => error.response?.data?.message || error.message
 
@@ -18,6 +20,8 @@ const ProductList = () => {
             }
         } catch (error) {
             toast.error(errorMessage(error))
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -57,6 +61,11 @@ const ProductList = () => {
         <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll flex flex-col justify-between">
             <div className="w-full md:p-10 p-4">
                 <h2 className="pb-4 text-lg font-medium">Your Products</h2>
+                {loading && <Spinner className='h-[60vh]' />}
+                {!loading && products.length === 0 && (
+                    <p className="text-gray-500">You haven't added any products yet.</p>
+                )}
+                {!loading && products.length > 0 && (
                 <div className="flex flex-col items-center max-w-4xl w-full overflow-hidden rounded-md bg-white border border-gray-500/20">
                     <table className="md:table-auto table-fixed w-full overflow-hidden">
                         <thead className="text-gray-900 text-sm text-left">
@@ -107,6 +116,7 @@ const ProductList = () => {
                         </tbody>
                     </table>
                 </div>
+                )}
             </div>
         </div>
     );

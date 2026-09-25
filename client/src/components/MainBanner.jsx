@@ -1,20 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import { assets } from "../assets/assets";
 import { Link } from "react-router-dom";
 
 const MainBanner = () => {
+  const [loaded, setLoaded] = useState(false);
+
   return (
-    <div className="relative">
-      <img
-  src={assets.main_banner_bg}
-  alt="banner"
-  className="w-full hidden md:block md:h-[290px] md:object-cover lg:h-auto"
-/>
-      <img
-        src={assets.main_banner_bg_sm}
-        alt="banner"
-        className="w-full md:hidden"
-      />
+    <div className="relative w-full overflow-hidden aspect-[993/1818] md:aspect-auto md:h-[290px] lg:h-auto lg:aspect-[2366/848]">
+      {!loaded && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+      )}
+
+      <picture>
+        <source media="(min-width: 768px)" srcSet={assets.main_banner_bg} />
+        <img
+          src={assets.main_banner_bg_sm}
+          alt="banner"
+          onLoad={() => setLoaded(true)}
+          onError={() => setLoaded(true)}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+        />
+      </picture>
+
       <div className="absolute inset-0 flex flex-col items-center md:items-start justify-end md:justify-center pb-24 md:pb-0 px-4 md:pl-18 lg:pl-24">
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center md:text-left max-w-72 md:max-w-80 lg:max-w-105 leading-tight lg:leading-15">
           Freshness You Can Trust, Savings You will Love!{" "}

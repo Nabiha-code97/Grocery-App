@@ -3,9 +3,10 @@ import { useAppContext } from '../context/AppContext'
 import { useParams } from 'react-router-dom'
 import { categories } from '../assets/assets'
 import ProductCard from '../components/ProductCard'
+import Spinner from '../components/Spinner'
 
 const ProductCategory = () => {
-        const { products } = useAppContext()
+        const { products, productsLoading } = useAppContext()
         const { category } = useParams()
 
         const searchCategory = categories.find((item) => item.path.toLowerCase() === category)
@@ -20,7 +21,9 @@ const ProductCategory = () => {
                 <div className='w-16 h-0.5 bg-primary rounded-full'></div>
             </div>
             )}{
-                filteredProducts.length > 0 ? (
+                productsLoading ? (
+                <Spinner className='h-[60vh]' />
+            ) : filteredProducts.length > 0 ? (
             <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6 lg:grid-cols-5 mt-6'>
                 {filteredProducts.filter((product) => product.inStock).map((product, index) => (
                 <ProductCard key={index} product={product} />

@@ -3,9 +3,10 @@ import { useAppContext } from '../context/AppContext';
 import { Link, useParams } from 'react-router-dom';
 import { assets } from '../assets/assets';
 import ProductCard from '../components/ProductCard';
+import Spinner from '../components/Spinner';
 
 const ProductDetails = () => {
-    const { products, navigate, currency, addToCart } = useAppContext();
+    const { products, productsLoading, navigate, currency, addToCart } = useAppContext();
     const { id } = useParams();
 
     const [relatedProducts, setRelatedProducts] = useState([]);
@@ -29,7 +30,15 @@ const ProductDetails = () => {
         setThumbnail(product?.image ? product.image[0] : null);
     }, [product]);
 
-    return product && (
+    if (productsLoading) return <Spinner className="h-[60vh]" />
+
+    if (!product) return (
+        <div className="flex items-center justify-center h-[60vh]">
+            <p className="text-2xl font-medium text-primary">Product not found.</p>
+        </div>
+    )
+
+    return (
         <div className="mt-12">
             <p>
                 <Link to={"/"}>Home</Link> /
